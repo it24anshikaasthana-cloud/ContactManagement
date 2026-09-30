@@ -100,7 +100,11 @@ pipeline {
 
                 bat 'docker ps'
 
-                bat 'curl -f http://localhost:8081'
+                echo 'Checking application at http://localhost:8081 ...'
+
+                bat '''
+                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:8081' -UseBasicParsing -TimeoutSec 20; if ($response.StatusCode -eq 200) { Write-Host 'Application is running successfully!' } else { Write-Host ('HTTP Status: ' + $response.StatusCode); exit 1 } } catch { Write-Host ('Verification failed: ' + $_.Exception.Message); exit 1 }"
+                '''
 
                 echo 'Application verification successful!'
             }
