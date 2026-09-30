@@ -40,10 +40,10 @@ pipeline {
 
         stage('Selenium Test') {
             steps {
-                echo 'Starting Contact Management application...'
+                echo 'Starting Contact Management application on port 8082...'
 
                 bat '''
-                start "ContactManagementApp" /B cmd /c ""%JAVA_HOME%\\bin\\java.exe" -jar target\\ContactManagement.jar > app.log 2>&1"
+                start "ContactManagementApp" /B cmd /c ""%JAVA_HOME%\\bin\\java.exe" -jar target\\ContactManagement.jar --server.port=8082 > app.log 2>&1"
 
                 "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -Command "Start-Sleep -Seconds 15"
                 '''
