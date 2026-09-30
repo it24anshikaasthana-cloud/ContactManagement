@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven-3.9.16'
+    }
+
     environment {
         DOCKER_IMAGE = "anshikaasthana/contactmanagement:latest"
         CONTAINER_NAME = "contactmanagement-container"
@@ -46,7 +50,17 @@ pipeline {
         stage('Docker Push') {
             steps {
                 echo 'Pushing Docker image to Docker Hub...'
-                bat 'docker push %DOCKER_IMAGE%'
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    bat 'echo %DOCKER_PASSWORD%| docker login -u "%DOCKER_USER%" --password-stdin'
+                    bat 'docker push %DOCKER_IMAGE%'
+                }
             }
         }
 
