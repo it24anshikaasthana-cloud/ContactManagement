@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK21'
         maven 'Maven-3.9.16'
     }
 
@@ -68,7 +67,6 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
-
                     bat 'echo %DOCKER_PASSWORD%| docker login -u "%DOCKER_USER%" --password-stdin'
                     bat 'docker push %DOCKER_IMAGE%'
                 }
@@ -91,7 +89,6 @@ pipeline {
                 echo 'Verifying Docker container...'
 
                 bat 'docker ps'
-
                 bat 'curl -f http://localhost:8081'
 
                 echo 'Application verification successful!'
