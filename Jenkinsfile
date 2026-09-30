@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     tools {
+        jdk 'JDK21'
         maven 'Maven-3.9.16'
     }
 
@@ -22,6 +23,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building project...'
+
                 bat 'java --version'
                 bat 'mvn --version'
                 bat 'mvn clean compile'
@@ -31,6 +33,7 @@ pipeline {
         stage('Package') {
             steps {
                 echo 'Creating JAR file...'
+
                 bat 'mvn package -DskipTests'
             }
         }
@@ -45,6 +48,7 @@ pipeline {
                 '''
 
                 echo 'Running Selenium tests...'
+
                 bat 'mvn test'
             }
         }
@@ -52,13 +56,14 @@ pipeline {
         stage('Docker Build') {
             steps {
                 echo 'Building Docker image...'
+
                 bat 'docker build -t %DOCKER_IMAGE% .'
             }
         }
 
         stage('Docker Push') {
             steps {
-                echo 'Logging into Docker Hub and pushing image...'
+                echo 'Logging into Docker Hub...'
 
                 withCredentials([
                     usernamePassword(
@@ -67,7 +72,11 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
+
                     bat 'echo %DOCKER_PASSWORD%| docker login -u "%DOCKER_USER%" --password-stdin'
+
+                    echo 'Pushing Docker image...'
+
                     bat 'docker push %DOCKER_IMAGE%'
                 }
             }
@@ -89,6 +98,7 @@ pipeline {
                 echo 'Verifying Docker container...'
 
                 bat 'docker ps'
+
                 bat 'curl -f http://localhost:8081'
 
                 echo 'Application verification successful!'
@@ -97,6 +107,7 @@ pipeline {
     }
 
     post {
+
         success {
             echo '======================================'
             echo 'PIPELINE SUCCESSFUL!'
