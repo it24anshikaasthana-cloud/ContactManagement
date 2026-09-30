@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK21'
         maven 'Maven-3.9.16'
     }
 
     environment {
+        JAVA_HOME = "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.12.101-hotspot"
         DOCKER_IMAGE = "anshikaasthana/contactmanagement:latest"
         CONTAINER_NAME = "contactmanagement-container"
     }
@@ -24,7 +24,7 @@ pipeline {
             steps {
                 echo 'Building project...'
 
-                bat 'java --version'
+                bat '"%JAVA_HOME%\\bin\\java.exe" --version'
                 bat 'mvn --version'
                 bat 'mvn clean compile'
             }
@@ -33,7 +33,6 @@ pipeline {
         stage('Package') {
             steps {
                 echo 'Creating JAR file...'
-
                 bat 'mvn package -DskipTests'
             }
         }
@@ -43,12 +42,11 @@ pipeline {
                 echo 'Starting Contact Management application...'
 
                 bat '''
-                start "ContactManagementApp" /B cmd /c "java -jar target\\ContactManagement.jar > app.log 2>&1"
+                start "ContactManagementApp" /B cmd /c ""%JAVA_HOME%\\bin\\java.exe" -jar target\\ContactManagement.jar > app.log 2>&1"
                 timeout /t 15 /nobreak
                 '''
 
                 echo 'Running Selenium tests...'
-
                 bat 'mvn test'
             }
         }
@@ -56,7 +54,6 @@ pipeline {
         stage('Docker Build') {
             steps {
                 echo 'Building Docker image...'
-
                 bat 'docker build -t %DOCKER_IMAGE% .'
             }
         }
@@ -72,11 +69,7 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
-
                     bat 'echo %DOCKER_PASSWORD%| docker login -u "%DOCKER_USER%" --password-stdin'
-
-                    echo 'Pushing Docker image...'
-
                     bat 'docker push %DOCKER_IMAGE%'
                 }
             }
@@ -98,7 +91,6 @@ pipeline {
                 echo 'Verifying Docker container...'
 
                 bat 'docker ps'
-
                 bat 'curl -f http://localhost:8081'
 
                 echo 'Application verification successful!'
@@ -107,7 +99,6 @@ pipeline {
     }
 
     post {
-
         success {
             echo '======================================'
             echo 'PIPELINE SUCCESSFUL!'
