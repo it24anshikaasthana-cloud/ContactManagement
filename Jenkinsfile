@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven-3.9.16'
-    }
-
     environment {
         DOCKER_IMAGE = "anshikaasthana/contactmanagement:latest"
         CONTAINER_NAME = "contactmanagement-container"
@@ -28,13 +24,21 @@ pipeline {
 
         stage('Package') {
             steps {
-                echo 'Creating JAR...'
+                echo 'Creating JAR file...'
                 bat 'mvn package -DskipTests'
             }
         }
 
         stage('Selenium Test') {
             steps {
+                echo 'Starting application for Selenium test...'
+
+                bat '''
+                taskkill /F /IM java.exe >nul 2>&1 || exit /b 0
+                start "ContactManagementApp" /B java -jar target\\ContactManagement.jar
+                timeout /t 15 /nobreak
+                '''
+
                 echo 'Running Selenium tests...'
                 bat 'mvn test'
             }
@@ -49,7 +53,7 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                echo 'Pushing Docker image to Docker Hub...'
+                echo 'Logging into Docker Hub and pushing image...'
 
                 withCredentials([
                     usernamePassword(
@@ -58,6 +62,7 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
+
                     bat 'echo %DOCKER_PASSWORD%| docker login -u "%DOCKER_USER%" --password-stdin'
                     bat 'docker push %DOCKER_IMAGE%'
                 }
@@ -78,19 +83,33 @@ pipeline {
         stage('Verify') {
             steps {
                 echo 'Verifying Docker container...'
+
                 bat 'docker ps'
-                bat 'curl -f http://localhost:8081'
+
+                timeout(time: 30, unit: 'SECONDS') {
+                    bat 'curl -f http://localhost:8081'
+                }
+
+                echo 'Application verification successful!'
             }
         }
     }
 
     post {
         success {
+            echo '======================================'
             echo 'PIPELINE SUCCESSFUL!'
+            echo '======================================'
         }
 
         failure {
+            echo '======================================'
             echo 'PIPELINE FAILED!'
+            echo '======================================'
+        }
+
+        always {
+            echo 'Pipeline execution completed.'
         }
     }
 }
