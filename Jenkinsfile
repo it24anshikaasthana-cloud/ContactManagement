@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'JDK21'
+        maven 'Maven-3.9.16'
+    }
+
     environment {
         DOCKER_IMAGE = "anshikaasthana/contactmanagement:latest"
         CONTAINER_NAME = "contactmanagement-container"
@@ -18,6 +23,8 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building project...'
+                bat 'java --version'
+                bat 'mvn --version'
                 bat 'mvn clean compile'
             }
         }
@@ -31,11 +38,10 @@ pipeline {
 
         stage('Selenium Test') {
             steps {
-                echo 'Starting application for Selenium test...'
+                echo 'Starting Contact Management application...'
 
                 bat '''
-                taskkill /F /IM java.exe >nul 2>&1 || exit /b 0
-                start "ContactManagementApp" /B java -jar target\\ContactManagement.jar
+                start "ContactManagementApp" /B cmd /c "java -jar target\\ContactManagement.jar > app.log 2>&1"
                 timeout /t 15 /nobreak
                 '''
 
@@ -86,9 +92,7 @@ pipeline {
 
                 bat 'docker ps'
 
-                timeout(time: 30, unit: 'SECONDS') {
-                    bat 'curl -f http://localhost:8081'
-                }
+                bat 'curl -f http://localhost:8081'
 
                 echo 'Application verification successful!'
             }
