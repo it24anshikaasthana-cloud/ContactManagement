@@ -100,13 +100,15 @@ pipeline {
 
                 bat 'docker ps'
 
-                echo 'Checking application at http://localhost:8081 ...'
+                echo 'Waiting for application to start...'
 
                 bat '''
-                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:8081' -UseBasicParsing -TimeoutSec 20; if ($response.StatusCode -eq 200) { Write-Host 'Application is running successfully!' } else { Write-Host ('HTTP Status: ' + $response.StatusCode); exit 1 } } catch { Write-Host ('Verification failed: ' + $_.Exception.Message); exit 1 }"
+                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -Command "$success=$false; for($i=1;$i -le 30;$i++){ try { $r=Invoke-WebRequest -Uri 'http://localhost:8081' -UseBasicParsing -TimeoutSec 3; if($r.StatusCode -eq 200){ Write-Host 'Application is running successfully!'; $success=$true; break } } catch { Write-Host ('Waiting for application... Attempt ' + $i) }; Start-Sleep -Seconds 2 }; if(-not $success){ Write-Host 'Application did not become ready.'; docker logs %CONTAINER_NAME%; exit 1 }"
                 '''
 
-                echo 'Application verification successful!'
+                echo '======================================'
+                echo 'APPLICATION VERIFICATION SUCCESSFUL!'
+                echo '======================================'
             }
         }
     }
