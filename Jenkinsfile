@@ -33,6 +33,7 @@ pipeline {
         stage('Package') {
             steps {
                 echo 'Creating JAR file...'
+
                 bat 'mvn package -DskipTests'
             }
         }
@@ -43,10 +44,12 @@ pipeline {
 
                 bat '''
                 start "ContactManagementApp" /B cmd /c ""%JAVA_HOME%\\bin\\java.exe" -jar target\\ContactManagement.jar > app.log 2>&1"
-                ping 127.0.0.1 -n 16 > nul
+
+                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -Command "Start-Sleep -Seconds 15"
                 '''
 
                 echo 'Running Selenium tests...'
+
                 bat 'mvn test'
             }
         }
@@ -54,6 +57,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 echo 'Building Docker image...'
+
                 bat 'docker build -t %DOCKER_IMAGE% .'
             }
         }
@@ -69,7 +73,11 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
+
                     bat 'echo %DOCKER_PASSWORD%| docker login -u "%DOCKER_USER%" --password-stdin'
+
+                    echo 'Pushing Docker image...'
+
                     bat 'docker push %DOCKER_IMAGE%'
                 }
             }
@@ -91,6 +99,7 @@ pipeline {
                 echo 'Verifying Docker container...'
 
                 bat 'docker ps'
+
                 bat 'curl -f http://localhost:8081'
 
                 echo 'Application verification successful!'
@@ -99,6 +108,7 @@ pipeline {
     }
 
     post {
+
         success {
             echo '======================================'
             echo 'PIPELINE SUCCESSFUL!'
